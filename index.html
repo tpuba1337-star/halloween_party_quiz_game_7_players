@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Хэллоуин Квиз: Ночь 7 Душ</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Creepster&family=Comfortaa:wght@400;700&family=Rubik+Glitch&display=swap" rel="stylesheet">
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        spooky: {
+                            bg: '#0c0714',
+                            card: '#180e29',
+                            purple: '#6b21a8',
+                            orange: '#f97316',
+                            green: '#22c55e',
+                            red: '#ef4444',
+                            gold: '#eab308'
+                        }
+                    },
+                    fontFamily: {
+                        spooky: ['Creepster', 'cursive'],
+                        glitch: ['"Rubik Glitch"', 'cursive'],
+                        main: ['Comfortaa', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #0c0714;
+            color: #f3e8ff;
+            font-family: 'Comfortaa', sans-serif;
+            overflow-x: hidden;
+            user-select: none;
+        }
+
+        /* Background Animated Glows */
+        .glow-bg {
+            background: radial-gradient(circle at 50% 50%, rgba(107, 33, 168, 0.25) 0%, rgba(12, 7, 20, 1) 75%);
+        }
+
+        /* Glowing text effects */
+        .text-glow-orange {
+            text-shadow: 0 0 12px rgba(249, 115, 22, 0.8), 0 0 24px rgba(249, 115, 22, 0.4);
+        }
+        .text-glow-green {
+            text-shadow: 0 0 12px rgba(34, 197, 94, 0.8), 0 0 24px rgba(34, 197, 94, 0.4);
+        }
+        .text-glow-purple {
+            text-shadow: 0 0 12px rgba(168, 85, 247, 0.8), 0 0 24px rgba(168, 85, 247, 0.4);
+        }
+
+        /* Custom Buttons */
+        .btn-spooky {
+            background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+            box-shadow: 0 4px 15px rgba(249, 115, 22, 0.4), inset 0 2px 2px rgba(255, 255, 255, 0.3);
+            transition: all 0.2s ease;
+        }
+        .btn-spooky:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 6px 20px rgba(249, 115, 22, 0.6), inset 0 2px 2px rgba(255, 255, 255, 0.4);
+        }
+        .btn-spooky:active {
+            transform: translateY(1px) scale(0.98);
+        }
+
+        .btn-purple {
+            background: linear-gradient(135deg, #7e22ce 0%, #6b21a8 100%);
+            box-shadow: 0 4px 15px rgba(126, 34, 206, 0.4);
+        }
+        .btn-purple:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 6px 20px rgba(126, 34, 206, 0.6);
+        }
+
+        /* Floating background elements */
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-15px) rotate(3deg); }
+        }
+        .animate-float {
+            animation: float 4s ease-in-out infinite;
+        }
+
+        /* Pulse animation for active player */
+        @keyframes activePulse {
+            0%, 100% { border-color: rgba(249, 115, 22, 1); box-shadow: 0 0 15px rgba(249, 115, 22, 0.6); }
+            50% { border-color: rgba(34, 197, 94, 1); box-shadow: 0 0 20px rgba(34, 197, 94, 0.8); }
+        }
+        .active-player-card {
+            animation: activePulse 2s infinite;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0c0714;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #4c1d95;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="glow-bg min-h-screen flex flex-col justify-between relative overflow-x-hidden">
+
+    <!-- Floating Canvas Particle Background -->
+    <canvas id="spookyCanvas" class="fixed inset-0 pointer-events-none z-0 opacity-40"></canvas>
+
+    <!-- Header / Navbar -->
+    <header class="relative z-10 w-full p-4 flex justify-between items-center border-b border-purple-900/50 bg-spooky-bg/80 backdrop-blur-md">
+        <div class="flex items-center space-x-3 cursor-pointer" onclick="location.reload()">
+            <i class="fa-solid fa-pumpkin text-4xl text-spooky-orange animate-bounce"></i>
+            <h1 class="font-spooky text-3xl md:text-4xl text-spooky-orange tracking-wider text-glow-orange">
+                Хэллоуин Квиз <span class="text-sm font-main text-purple-400 block sm:inline"> Party for 7</span>
+            </h1>
+        </div>
+
+        <!-- Audio & Control Buttons -->
+        <div class="flex items-center space-x-3">
+            <button id="bgmBtn" onclick="toggleAmbience()" class="bg-purple-950/80 hover:bg-purple-900 border border-purple-700/50 px-3 py-2 rounded-xl text-purple-200 transition flex items-center space-x-2 text-sm sm:text-base">
+                <i id="bgmIcon" class="fa-solid fa-volume-xmark text-spooky-orange"></i>
+                <span class="hidden sm:inline">Эмбиент</span>
+            </button>
+            <button onclick="resetGamePrompt()" class="bg-red-950/80 hover:bg-red-900 border border-red-700/50 px-3 py-2 rounded-xl text-red-200 transition text-sm sm:text-base">
+                <i class="fa-solid fa-rotate-right"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="relative z-10 container mx-auto px-4 py-6 flex-grow flex flex-col justify-center items-center">
+
+        <!-- SCREEN 1: PLAYER SETUP -->
+        <div id="setupScreen" class="w-full max-w-4xl bg-spooky-card/90 border-2 border-purple-800/60 rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur-md">
+            <div class="text-center mb-6">
+                <h2 class="font-spooky text-4xl sm:text-5xl text-spooky-orange text-glow-orange mb-2">Регистрация 7 Душ</h2>
+                <p class="text-purple-300 text-sm sm:text-base">Введите имена 7 игроков или используйте хэллоуинские псевдонимы!</p>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-7 gap-3 mb-8" id="playerInputsContainer">
+                <!-- 7 Player inputs dynamically created here -->
+            </div>
+
+            <div class="flex flex-col sm:flex-row justify-center items-center gap-4">
+                <button onclick="randomizeNames()" class="w-full sm:w-auto px-6 py-3 bg-purple-900/80 hover:bg-purple-800 border border-purple-600 rounded-2xl font-bold transition flex items-center justify-center space-x-2">
+                    <i class="fa-solid fa-dice text-spooky-green"></i>
+                    <span>Случайные Имена</span>
+                </button>
+                <button onclick="startGame()" class="w-full sm:w-auto btn-spooky px-10 py-4 rounded-2xl font-bold text-xl text-white tracking-wider flex items-center justify-center space-x-3">
+                    <span>НАЧАТЬ ВЕЧЕРИНКУ</span>
+                    <i class="fa-solid fa-skull text-2xl"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- SCREEN 2: GAMEPLAY DASHBOARD (Main Screen) -->
+        <div id="gameScreen" class="w-full max-w-5xl hidden flex-col space-y-6">
+
+            <!-- Top Info Bar: Round & Scores Summary -->
+            <div class="bg-spooky-card/90 border border-purple-800/80 rounded-2xl p-4 flex flex-col md:flex-row justify-between items-center gap-4 shadow-xl">
+                <div class="flex items-center space-x-3">
+                    <span id="roundBadge" class="bg-spooky-orange/20 border border-spooky-orange text-spooky-orange px-4 py-1 rounded-full font-bold text-sm tracking-wide">
+                        РАУНД 1
+                    </span>
+                    <h3 id="roundTitle" class="font-bold text-lg sm:text-xl text-purple-200">
+                        Хэллоуинская Викторина
+                    </h3>
+                </div>
+
+                <!-- Live Scoreboard Bar (7 players horizontal list) -->
+                <div id="miniLeaderboard" class="flex flex-wrap justify-center items-center gap-2 w-full md:w-auto">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+
+            <!-- Main Interactive Card -->
+            <div class="bg-spooky-card/95 border-2 border-purple-700/60 rounded-3xl p-6 sm:p-10 shadow-2xl relative overflow-hidden flex flex-col items-center">
+                
+                <!-- Current Active Player Banner -->
+                <div id="turnBanner" class="mb-6 bg-purple-950/80 border border-purple-500/40 px-6 py-2 rounded-full flex items-center space-x-3 shadow-md">
+                    <span class="text-sm text-purple-300">Очередь игрока:</span>
+                    <span id="activePlayerName" class="font-bold text-lg text-spooky-orange text-glow-orange flex items-center space-x-2">
+                        <!-- Icon + Name -->
+                    </span>
+                </div>
+
+                <!-- Question / Prompt Display Area -->
+                <div class="w-full text-center mb-8">
+                    <div id="questionCategory" class="text-xs uppercase tracking-widest text-spooky-green font-bold mb-2">Категория</div>
+                    <h2 id="questionText" class="text-2xl sm:text-3xl md:text-4xl font-bold text-white leading-snug max-w-3xl mx-auto">
+                        Загрузка вопроса...
+                    </h2>
+                </div>
+
+                <!-- Dynamic Content Container (Varies by Round) -->
+                <div id="actionContainer" class="w-full max-w-3xl">
+                    <!-- Multiple choice buttons or player selection grid -->
+                </div>
+
+                <!-- Explanation / Reveal Footer -->
+                <div id="feedbackBox" class="mt-6 w-full max-w-2xl bg-purple-950/90 border border-purple-600/50 rounded-2xl p-4 text-center hidden">
+                    <div id="feedbackResult" class="font-bold text-xl mb-1"></div>
+                    <p id="feedbackText" class="text-purple-200 text-sm sm:text-base"></p>
+                    <button id="nextBtn" onclick="nextStep()" class="mt-4 btn-spooky px-8 py-3 rounded-xl font-bold text-white tracking-wide">
+                        Дальше <i class="fa-solid fa-arrow-right ml-1"></i>
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- SCREEN 3: FINAL VICTORY CEREMONY -->
+        <div id="victoryScreen" class="w-full max-w-4xl bg-spooky-card/95 border-4 border-spooky-orange rounded-3xl p-8 shadow-2xl text-center hidden backdrop-blur-lg">
+            <div class="text-6xl text-spooky-gold mb-4 animate-bounce">
+                <i class="fa-solid fa-crown"></i>
+            </div>
+            <h2 class="font-spooky text-5xl sm:text-6xl text-spooky-orange text-glow-orange mb-2">КОРОНАЦИЯ ХЭЛЛОУИНА</h2>
+            <p class="text-purple-300 text-lg mb-6">Битва 7 душ окончена! Объявляется главный повелитель кошмаров:</p>
+
+            <!-- Winner Card -->
+            <div id="winnerCard" class="bg-purple-950/80 border-2 border-spooky-gold rounded-3xl p-6 mb-8 max-w-md mx-auto shadow-2xl flex flex-col items-center">
+                <!-- Avatar & Name -->
+            </div>
+
+            <!-- Full 7 Players Leaderboard Table -->
+            <div class="mb-8">
+                <h3 class="font-bold text-xl text-purple-200 mb-4 border-b border-purple-800 pb-2">Финальная Таблица Лидеров</h3>
+                <div id="finalLeaderboardList" class="space-y-2 max-w-xl mx-auto">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+
+            <button onclick="location.reload()" class="btn-spooky px-10 py-4 rounded-2xl font-bold text-xl text-white">
+                <i class="fa-solid fa-rotate-right mr-2"></i>Сыграть Снова
+            </button>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="relative z-10 w-full p-3 text-center text-xs text-purple-400 border-t border-purple-900/40 bg-spooky-bg/80 flex justify-center items-center gap-2">
+        <i class="fa-solid fa-pumpkin text-spooky-orange"></i>
+        <span>Вечеринка Хэллоуина на 7 игроков • Играйте на одном экране!</span>
+    </footer>
+
+    <!-- GAME LOGIC SCRIPT -->
+    <script>
+        /* --- AUDIO SYSTEM (Web Audio API Synthesizer) --- */
+        let audioCtx = null;
+        let isAmbiencePlaying = false;
+        let ambientOsc = null;
+        let ambientGain = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playSound(type) {
+            initAudio();
+            if (!audioCtx) return;
+
+            const now = audioCtx.currentTime;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            if (type === 'click') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(400, now);
+                osc.frequency.exponentialRampToValueAtTime(800, now + 0.05);
+                gain.gain.setValueAtTime(0.15, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.05);
+                osc.start(now);
+                osc.stop(now + 0.05);
+            } else if (type === 'correct') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(523.25, now); // C5
+                osc.frequency.setValueAtTime(659.25, now + 0.1); // E5
+                osc.frequency.setValueAtTime(783.99, now + 0.2); // G5
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.4);
+                osc.start(now);
+                osc.stop(now + 0.4);
+            } else if (type === 'wrong') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(200, now);
+                osc.frequency.linearRampToValueAtTime(100, now + 0.3);
+                gain.gain.setValueAtTime(0.25, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.3);
+                osc.start(now);
+                osc.stop(now + 0.3);
+            } else if (type === 'victory') {
+                // Fanfare
+                const notes = [440, 554.37, 659.25, 880];
+                notes.forEach((freq, idx) => {
+                    const o = audioCtx.createOscillator();
+                    const g = audioCtx.createGain();
+                    o.connect(g);
+                    g.connect(audioCtx.destination);
+                    o.frequency.setValueAtTime(freq, now + idx * 0.12);
+                    g.gain.setValueAtTime(0.2, now + idx * 0.12);
+                    g.gain.linearRampToValueAtTime(0.01, now + idx * 0.12 + 0.3);
+                    o.start(now + idx * 0.12);
+                    o.stop(now + idx * 0.12 + 0.3);
+                });
+            }
+        }
+
+        function toggleAmbience() {
+            initAudio();
+            const btnIcon = document.getElementById('bgmIcon');
+            if (isAmbiencePlaying) {
+                if (ambientGain) ambientGain.gain.linearRampToValueAtTime(0.001, audioCtx.currentTime + 1);
+                setTimeout(() => { if (ambientOsc) ambientOsc.stop(); }, 1000);
+                isAmbiencePlaying = false;
+                btnIcon.className = "fa-solid fa-volume-xmark text-spooky-orange";
+            } else {
+                ambientOsc = audioCtx.createOscillator();
+                ambientGain = audioCtx.createGain();
+                ambientOsc.type = 'sine';
+                ambientOsc.frequency.setValueAtTime(75, audioCtx.currentTime); // Low spooky drone
+                
+                // Vibrato effect for creepy vibe
+                const lfo = audioCtx.createOscillator();
+                const lfoGain = audioCtx.createGain();
+                lfo.frequency.value = 0.5; // slow pulse
+                lfoGain.gain.value = 5;
+                lfo.connect(ambientOsc.frequency);
+                lfo.start();
+
+                ambientOsc.connect(ambientGain);
+                ambientGain.connect(audioCtx.destination);
+
+                ambientGain.gain.setValueAtTime(0.001, audioCtx.currentTime);
+                ambientGain.gain.linearRampToValueAtTime(0.08, audioCtx.currentTime + 2); // soft ambient volume
+
+                ambientOsc.start();
+                isAmbiencePlaying = true;
+                btnIcon.className = "fa-solid fa-volume-high text-spooky-green";
+            }
+        }
+
+        /* --- PRESET PLAYER DATA & AVATARS --- */
+        const DEFAULT_NAMES = ["Тыковка 🎃", "Дракула 🧛", "Ведьмочка 🧙‍♀️", "Франкенштейн 🧟", "Призрак 👻", "Оборотень 🐺", "Мумия 🩹"];
+        const AVATARS = [
+            { icon: "fa-solid fa-pumpkin", svg: `<svg class="w-8 h-8 text-orange-500 fill-current inline-block" viewBox="0 0 512 512"><path d="M482.3 192c-9.1-39.7-38.3-71.8-77.2-83.6-28.7-8.7-59.5-6.3-87.3 5.4 6-23.8 2.1-49.8-11.8-70.5C288.2 17.1 260.2 0 230 0c-11 0-20 9-20 20s9 20 20 20c15.1 0 29.1 8.5 37.6 21.2 7 10.4 8.9 23.4 5.9 35.4-8.7 1.8-17.5 4.5-26.1 8.2-34.9-38.8-87.3-51.1-135.2-31C61 95.2 24.3 144.3 18.2 201.2 5.9 233.1 0 266.6 0 300.8 0 411.3 109.8 512 256 512s256-100.7 256-211.2c0-38.8-8.2-76.3-29.7-108.8zM256 464c-112.5 0-208-75.2-208-163.2 0-25.1 4.7-49.8 13.8-72.9 27.2-19.1 61.2-24 92.5-13.4 12.1 4.1 24.8 6.2 37.7 6.2 12.9 0 25.6-2.1 37.7-6.2 31.3-10.6 65.3-5.7 92.5 13.4 9.1 23.1 13.8 47.8 13.8 72.9 0 88-95.5 163.2-208 163.2z"/></svg>`, color: "text-orange-500" },
+            { icon: "fa-spaghetti-monster-flying", svg: null, color: "text-red-500" },
+            { icon: "fa-hat-wizard", svg: null, color: "text-purple-400" },
+            { icon: "fa-biohazard", svg: null, color: "text-green-500" },
+            { icon: "fa-ghost", svg: null, color: "text-blue-300" },
+            { icon: "fa-paw", svg: null, color: "text-amber-600" },
+            { icon: "fa-skull", svg: null, color: "text-gray-300" }
+        ];
+
+        let players = [];
+        let currentRound = 1; // 1: Trivia, 2: Who among 7, 3: Mystery Riddles
+        let currentTurnIndex = 0; // Index 0..6 for players turn
+        let questionIndex = 0;
+
+        /* --- GAME QUESTIONS DATABASE --- */
+
+        // Round 1 Questions (Classic Halloween Trivia)
+        const triviaQuestions = [
+            {
+                q: "Какая страна считается исторической родиной Хэллоуина?",
+                options: ["США", "Ирландия", "Германия", "Мексика"],
+                correct: 1,
+                exp: "Хэллоуин произошел от древнего кельтского праздника Самайн в Ирландии!"
+            },
+            {
+                q: "Из какого овоща первоначально вырезали Светильники Джека в Кельтских традициях?",
+                options: ["Из Тыквы", "Из Репы", "Из Картофеля", "Из Кабачка"],
+                correct: 1,
+                exp: "Раньше вырезали страшные рожицы из крупной репы или брюквы!"
+            },
+            {
+                q: "Как переводится традиционная фраза «Trick or Treat»?",
+                options: ["Кошелек или жизнь", "Сладость или гадость", "Конфеты или смерть", "Трюк или испуг"],
+                correct: 1,
+                exp: "Буквально это означает «Пакость или Угощение»!"
+            },
+            {
+                q: "Какой фобией страдают люди, которые панически боятся Хэллоуина?",
+                options: ["Арахнофобия", "Самхайнофобия", "Фантазмофобия", "Некрофобия"],
+                correct: 1,
+                exp: "Самхайнофобия — официальный термин боязни этого праздника."
+            },
+            {
+                q: "В каком фильме ужасов появляется легендарный маньяк Майкл Майерс?",
+                options: ["Пятница 13-е", "Крик", "Хэллоуин", "Кошмар на улице Вязов"],
+                correct: 2,
+                exp: "Майкл Майерс — главный злодей культовой франшизы «Хэллоуин» (1978)."
+            },
+            {
+                q: "Какое животное традиционно считается главным спутником хэллоуинской ведьмы?",
+                options: ["Черный кот", "Летучая мышь", "Сова", "Жаба"],
+                correct: 0,
+                exp: "Черные коты исторически считались фамильярами ведьм."
+            },
+            {
+                q: "Что по легенде нужно надеть наизнанку и пройти задом наперед в ночь Хэллоуина, чтобы увидеть ведьму?",
+                options: ["Носки", "Одежду", "Шляпу", "Перчатки"],
+                correct: 1,
+                exp: "По суеверию, вывернутая одежда в полночь приманивает настоящую ведьму!"
+            },
+            {
+                q: "Какое имя носит демонический кукольный персонаж из серии фильмов «Пила»?",
+                options: ["Чаки", "Билли", "Анабель", "Роберт"],
+                correct: 1,
+                exp: "Знаменитая кукла на велосипеде носит имя Билли!"
+            },
+            {
+                q: "В какой стране отмечают Праздник Мертвых (Día de los Muertos) с черепами из сахара?",
+                options: ["Испания", "Бразилия", "Мексика", "Аргентина"],
+                correct: 2,
+                exp: "Día de los Muertos — один из ярчайших праздников Мексики!"
+            },
+            {
+                q: "Как зовут знаменитого охотника на вампиров из романа Брэма Стокера «Дракула»?",
+                options: ["Ван Хельсинг", "Франкенштейн", "Соломон Кейн", "Блейд"],
+                correct: 0,
+                exp: "Абрахам Ван Хельсинг — культовый доктор и охотник на монстров."
+            },
+            {
+                q: "Какое растение традиционно используют для защиты от вампиров?",
+                options: ["Мята", "Чеснок", "Базилик", "Полынь"],
+                correct: 1,
+                exp: "Считается, что резкий запах чеснока отпугивает нежить."
+            },
+            {
+                q: "Как называется жуткое существо из славянского фольклора, чья смерть спрятана в игле?",
+                options: ["Баба Яга", "Кощей Бессмертный", "Водяной", "Леший"],
+                correct: 1,
+                exp: "Смерть Кощея на конце иглы, игла в яйце, яйцо в утке..."
+            },
+            {
+                q: "Какое существо меняет облик при виде полной луны?",
+                options: ["Вампир", "Оборотень (Вервольф)", "Упырь", "Вендиго"],
+                correct: 1,
+                exp: "Оборотни обращаются в волков именно в полнолуние!"
+            },
+            {
+                q: "Как зовут призрака, промышляющего в женских туалетах по городским легендам?",
+                options: ["Кровавая Мэри", "Черная Дама", "Звонкая Анна", "Плачущая Невеста"],
+                correct: 0,
+                exp: "Если трижды произнести «Кровавая Мэри» перед зеркалом в темноте..."
+            }
+        ];
+
+        // Round 2 Questions ("Кто из 7-х?" Social Voting)
+        const socialQuestions = [
+            "Кто из 7 игроков ПЕРВЫМ погибнет в классическом фильме ужасов?",
+            "Кто из 7 игроков окажется ТАЙНЫМ убийцей или призраком в доме?",
+            "Кто из 7 игроков побежит обнимать монстра, подумав, что это аниматор?",
+            "Кто из 7 игроков уронит единственное оружие в самый ответственный момент?",
+            "Кто из 7 игроков случайно призовет демона, неправильно прочитав рецепт пирога?",
+            "Кто из 7 игроков подружится с зомби ради бесплатной еды?",
+            "Кто из 7 игроков закричит громче всех от неожиданного прыжка котика?",
+            "Кто из 7 игроков попытается продать свою душу дьяволу за банку чипсов?",
+            "Кто из 7 игроков первее всех предложит: «Ребята, давайте разделимся!» в темном лесу?",
+            "Кто из 7 игроков будет снимать свое нападение призрака на телефон для TikTok?",
+            "Кто из 7 игроков спрячется в шкафу и случайно заснет там во время побега?",
+            "Кто из 7 игроков начнет спорить с чудовищем о политике или фильмах?",
+            "Кто из 7 игроков выживет в зомби-апокалипсисе благодаря абсолютной лени?",
+            "Кто из 7 игроков окажется владельцем заброшенного проклятого замка?"
+        ];
+
+        // Round 3 Questions (Riddles & Dark Mysteries)
+        const riddleQuestions = [
+            {
+                q: "Я безглаз, но могу слезить. Я без ног, но могу ходить. Я сгораю дотла, даря вам свет во тьме. Что я?",
+                options: ["Свеча", "Призрак", "Тыква", "Туман"],
+                correct: 0,
+                exp: "Свеча сгорает, плача воском, освещая темные ночи!"
+            },
+            {
+                q: "Чем больше меня берешь, тем больше оставляешь позади. Что я?",
+                options: ["Тени", "Следы", "Кости", "Воспоминания"],
+                correct: 1,
+                exp: "Это следы! Чем дальше идешь по склепу, тем больше оставляешь их."
+            },
+            {
+                q: "У меня нет плоти, нет костей, но есть 5 пальцев. Что я?",
+                options: ["Перчатка скелета", "Тень", "Веер", "Дым"],
+                correct: 0,
+                exp: "Перчатка!"
+            },
+            {
+                q: "Я могу летать без крыльев, плакать без глаз. Где бы я ни появлялся, наступает тьма. Что я?",
+                options: ["Туча / Туман", "Летучая мышь", "Дух", "Ветер"],
+                correct: 0,
+                exp: "Это грозовая туча или мистический туман!"
+            },
+            {
+                q: "Старинный монстр из фольклора, который боялся чеснока, серебра и дневного света. Кто это?",
+                options: ["Вампир", "Оборотень", "Франкенштейн", "Зомби"],
+                correct: 0,
+                exp: "Вампиры терпеть не могут чеснок и солнечный свет!"
+            },
+            {
+                q: "Его можно услышать, но нельзя увидеть или потрогать. Он отвечает лишь тогда, когда говоришь ты. Что это?",
+                options: ["Эхо в склепе", "Призрак", "Шепот", "Ветер"],
+                correct: 0,
+                exp: "Эхо!"
+            },
+            {
+                q: "Я появляюсь раз в году, меня украшают шрамами и огнем, а утром выбрасывают. Кто я?",
+                options: ["Тыква Джека", "Костюм", "Маска", "Свеча"],
+                correct: 0,
+                exp: "Тыквенный Светильник Джека!"
+            },
+            {
+                q: "Тот, кто делает меня — не нуждается во мне. Тот, кто покупает — не использует. Тот, кто использует — не знает об этом. Что это?",
+                options: ["Гроб", "Яд", "Проклятие", "Замок"],
+                correct: 0,
+                exp: "Гроб!"
+            },
+            {
+                q: "Я следую за тобой везде при свете дня, но исчезаю, когда наступает полная тьма. Кто я?",
+                options: ["Тень", "Призрак", "Отражение", "Двойник"],
+                correct: 0,
+                exp: "Тень!"
+            },
+            {
+                q: "У меня есть горлышко, но нет головы. У меня есть плечи, но нет рук. Что я такое?",
+                options: ["Бутылка зелья", "Зомби", "Кувшин", "Свеча"],
+                correct: 0,
+                exp: "Бутылка или кувшин с зельем!"
+            }
+        ];
+
+        /* --- INITIALIZATION & UI SETUP --- */
+
+        window.onload = function() {
+            initInputs();
+            initParticles();
+        };
+
+        function initInputs() {
+            const container = document.getElementById('playerInputsContainer');
+            container.innerHTML = '';
+            for (let i = 0; i < 7; i++) {
+                const av = AVATARS[i];
+                const avatarIconHtml = av.svg ? av.svg : `<i class="fa-solid ${av.icon}"></i>`;
+                const inputHtml = `
+                    <div class="bg-purple-950/60 border border-purple-700/50 rounded-2xl p-3 flex flex-col items-center shadow-md">
+                        <div class="text-3xl mb-2 ${av.color} flex items-center justify-center h-10 w-10">
+                            ${avatarIconHtml}
+                        </div>
+                        <span class="text-xs font-bold text-purple-300 mb-1">Игрок ${i + 1}</span>
+                        <input type="text" id="pName_${i}" value="${DEFAULT_NAMES[i]}" 
+                            class="w-full bg-spooky-bg border border-purple-600/80 rounded-xl px-2 py-1.5 text-center text-sm font-bold text-white focus:outline-none focus:border-spooky-orange transition" placeholder="Имя...">
+                    </div>
+                `;
+                container.innerHTML += inputHtml;
+            }
+        }
+
+        function randomizeNames() {
+            playSound('click');
+            const shuffled = [...DEFAULT_NAMES].sort(() => 0.5 - Math.random());
+            for (let i = 0; i < 7; i++) {
+                document.getElementById(`pName_${i}`).value = shuffled[i];
+            }
+        }
+
+        function resetGamePrompt() {
+            if (confirm("Перезапустить игру и сбросить счет?")) {
+                location.reload();
+            }
+        }
+
+        /* --- START GAME --- */
+
+        function startGame() {
+            playSound('click');
+            players = [];
+            for (let i = 0; i < 7; i++) {
+                const val = document.getElementById(`pName_${i}`).value.trim();
+                const name = val !== "" ? val : `Душа ${i + 1}`;
+                players.push({
+                    id: i,
+                    name: name,
+                    avatar: AVATARS[i],
+                    score: 0
+                });
+            }
+
+            document.getElementById('setupScreen').classList.add('hidden');
+            document.getElementById('gameScreen').classList.remove('hidden');
+            document.getElementById('gameScreen').classList.add('flex');
+
+            currentRound = 1;
+            questionIndex = 0;
+            currentTurnIndex = 0;
+
+            renderMiniLeaderboard();
+            loadQuestion();
+        }
+
+        /* --- LEADERBOARD RENDERERS --- */
+
+        function renderMiniLeaderboard() {
+            const container = document.getElementById('miniLeaderboard');
+            container.innerHTML = '';
+
+            players.forEach((p, idx) => {
+                const isActive = idx === currentTurnIndex;
+                const activeClass = isActive ? 'border-spooky-orange bg-purple-900 shadow-lg scale-105' : 'border-purple-800/60 bg-purple-950/40 opacity-80';
+                const avatarIconHtml = p.avatar.svg ? `<span class="w-4 h-4 inline-block ${p.avatar.color}">${p.avatar.svg}</span>` : `<i class="fa-solid ${p.avatar.icon} ${p.avatar.color}"></i>`;
+                
+                const chip = `
+                    <div class="border ${activeClass} px-2.5 py-1 rounded-xl flex items-center space-x-1.5 transition-all text-xs">
+                        ${avatarIconHtml}
+                        <span class="font-bold text-white truncate max-w-[70px] sm:max-w-[100px]">${p.name}</span>
+                        <span class="bg-spooky-orange/30 text-spooky-orange px-1.5 py-0.5 rounded-md font-bold">${p.score}</span>
+                    </div>
+                `;
+                container.innerHTML += chip;
+            });
+        }
+
+        /* --- MAIN GAME FLOW & QUESTION LOADER --- */
+
+        function loadQuestion() {
+            renderMiniLeaderboard();
+            document.getElementById('feedbackBox').classList.add('hidden');
+
+            const activePlayer = players[currentTurnIndex];
+            const turnBanner = document.getElementById('activePlayerName');
+            const activeAvatarHtml = activePlayer.avatar.svg ? `<span class="w-6 h-6 inline-block ${activePlayer.avatar.color}">${activePlayer.avatar.svg}</span>` : `<i class="fa-solid ${activePlayer.avatar.icon} ${activePlayer.avatar.color}"></i>`;
+            turnBanner.innerHTML = `${activeAvatarHtml} <span>${activePlayer.name}</span>`;
+
+            const roundBadge = document.getElementById('roundBadge');
+            const roundTitle = document.getElementById('roundTitle');
+            const actionArea = document.getElementById('actionContainer');
+            actionArea.innerHTML = '';
+
+            if (currentRound === 1) {
+                roundBadge.innerText = "РАУНД 1";
+                roundTitle.innerText = "Хэллоуинская Викторина (Тест)";
+                document.getElementById('questionCategory').innerText = `Вопрос для ${activePlayer.name}`;
+                
+                const qData = triviaQuestions[questionIndex];
+                document.getElementById('questionText').innerText = qData.q;
+
+                // Render 4 options
+                const grid = document.createElement('div');
+                grid.className = "grid grid-cols-1 sm:grid-cols-2 gap-4 w-full";
+
+                qData.options.forEach((opt, idx) => {
+                    const btn = document.createElement('button');
+                    btn.className = "btn-purple p-4 rounded-2xl text-left font-bold text-lg text-white border border-purple-500/40 flex items-center space-x-3 transition transform active:scale-95";
+                    btn.innerHTML = `
+                        <span class="w-8 h-8 rounded-full bg-purple-900/80 border border-purple-400 flex items-center justify-center text-sm font-bold text-spooky-orange">${String.fromCharCode(65 + idx)}</span>
+                        <span>${opt}</span>
+                    `;
+                    btn.onclick = () => handleTriviaAnswer(idx, qData.correct, qData.exp);
+                    grid.appendChild(btn);
+                });
+                actionArea.appendChild(grid);
+
+            } else if (currentRound === 2) {
+                roundBadge.innerText = "РАУНД 2";
+                roundTitle.innerText = "Кто из 7 игроков? (Общий выбор)";
+                document.getElementById('questionCategory').innerText = "Голосует вся компания на экране!";
+
+                const qText = socialQuestions[questionIndex];
+                document.getElementById('questionText').innerText = `«${qText}»`;
+
+                // Render 7 Player Selection Buttons
+                const grid = document.createElement('div');
+                grid.className = "grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-3 w-full";
+
+                players.forEach((p) => {
+                    const btn = document.createElement('button');
+                    btn.className = "bg-purple-950/80 hover:bg-purple-800 border-2 border-purple-600 rounded-2xl p-3 flex flex-col items-center justify-center transition transform hover:-translate-y-1 active:scale-95 shadow-lg";
+                    const btnAvatarHtml = p.avatar.svg ? `<span class="w-8 h-8 mb-2 inline-block ${p.avatar.color}">${p.avatar.svg}</span>` : `<i class="fa-solid ${p.avatar.icon} ${p.avatar.color} text-3xl mb-2"></i>`;
+                    btn.innerHTML = `
+                        ${btnAvatarHtml}
+                        <span class="font-bold text-xs text-white text-center truncate w-full">${p.name}</span>
+                    `;
+                    btn.onclick = () => handleSocialVote(p.id);
+                    grid.appendChild(btn);
+                });
+                actionArea.appendChild(grid);
+
+            } else if (currentRound === 3) {
+                roundBadge.innerText = "РАУНД 3";
+                roundTitle.innerText = "Загадки Тьмы (Финал)";
+                document.getElementById('questionCategory').innerText = `Загадка для ${activePlayer.name}`;
+
+                const qData = riddleQuestions[questionIndex];
+                document.getElementById('questionText').innerText = qData.q;
+
+                // Render riddle choices
+                const grid = document.createElement('div');
+                grid.className = "grid grid-cols-1 sm:grid-cols-2 gap-4 w-full";
+
+                qData.options.forEach((opt, idx) => {
+                    const btn = document.createElement('button');
+                    btn.className = "btn-purple p-4 rounded-2xl text-left font-bold text-lg text-white border border-purple-500/40 flex items-center space-x-3 transition transform active:scale-95";
+                    btn.innerHTML = `
+                        <span class="w-8 h-8 rounded-full bg-purple-900/80 border border-purple-400 flex items-center justify-center text-sm font-bold text-spooky-orange">${idx + 1}</span>
+                        <span>${opt}</span>
+                    `;
+                    btn.onclick = () => handleTriviaAnswer(idx, qData.correct, qData.exp, 20); // 20 pts for round 3
+                    grid.appendChild(btn);
+                });
+                actionArea.appendChild(grid);
+            }
+        }
+
+        /* --- ANSWER HANDLERS --- */
+
+        function handleTriviaAnswer(selectedIndex, correctIndex, explanation, points = 10) {
+            const feedbackBox = document.getElementById('feedbackBox');
+            const resultText = document.getElementById('feedbackResult');
+            const expText = document.getElementById('feedbackText');
+            
+            // Disable all option buttons
+            const buttons = document.querySelectorAll('#actionContainer button');
+            buttons.forEach(b => b.disabled = true);
+
+            if (selectedIndex === correctIndex) {
+                playSound('correct');
+                players[currentTurnIndex].score += points;
+                resultText.className = "font-bold text-2xl text-spooky-green text-glow-green mb-1 flex items-center justify-center gap-2";
+                resultText.innerHTML = `Правильно! +${points} Очков <i class="fa-solid fa-sparkles text-spooky-gold"></i>`;
+            } else {
+                playSound('wrong');
+                resultText.className = "font-bold text-2xl text-spooky-red mb-1 flex items-center justify-center gap-2";
+                resultText.innerHTML = `Ошибка кошмара! <i class="fa-solid fa-skull"></i>`;
+            }
+
+            expText.innerText = explanation;
+            feedbackBox.classList.remove('hidden');
+            renderMiniLeaderboard();
+        }
+
+        function handleSocialVote(votedPlayerId) {
+            playSound('correct');
+            const votedPlayer = players.find(p => p.id === votedPlayerId);
+            votedPlayer.score += 15; // Give points to selected player for being chosen
+
+            const feedbackBox = document.getElementById('feedbackBox');
+            const resultText = document.getElementById('feedbackResult');
+            const expText = document.getElementById('feedbackText');
+
+            // Disable buttons
+            const buttons = document.querySelectorAll('#actionContainer button');
+            buttons.forEach(b => b.disabled = true);
+
+            resultText.className = "font-bold text-2xl text-spooky-orange text-glow-orange mb-1 flex items-center justify-center gap-2";
+            resultText.innerHTML = `Единогласно выбран(а): ${votedPlayer.name}! <i class="fa-solid fa-pumpkin"></i>`;
+            expText.innerText = `${votedPlayer.name} получает +15 очков за народное признание!`;
+
+            feedbackBox.classList.remove('hidden');
+            renderMiniLeaderboard();
+        }
+
+        /* --- NEXT STEP / ROUND PROGRESSION --- */
+
+        function nextStep() {
+            playSound('click');
+            questionIndex++;
+            currentTurnIndex = (currentTurnIndex + 1) % 7; // Cycle through 7 players
+
+            // Check limit of questions per round based on available questions list
+            let maxQuestionsInRound = 7;
+            if (currentRound === 1) maxQuestionsInRound = triviaQuestions.length;
+            if (currentRound === 2) maxQuestionsInRound = socialQuestions.length;
+            if (currentRound === 3) maxQuestionsInRound = riddleQuestions.length;
+
+            if (questionIndex >= maxQuestionsInRound) {
+                questionIndex = 0;
+                currentTurnIndex = 0;
+                currentRound++;
+
+                if (currentRound > 3) {
+                    showFinalVictory();
+                    return;
+                }
+            }
+
+            loadQuestion();
+        }
+
+        /* --- VICTORY CEREMONY --- */
+
+        function showFinalVictory() {
+            playSound('victory');
+            document.getElementById('gameScreen').classList.add('hidden');
+            document.getElementById('victoryScreen').classList.remove('hidden');
+
+            // Sort players by score
+            const sorted = [...players].sort((a, b) => b.score - a.score);
+            const winner = sorted[0];
+
+            // Confetti explosion
+            if (typeof confetti === 'function') {
+                confetti({
+                    particleCount: 150,
+                    spread: 80,
+                    origin: { y: 0.6 },
+                    colors: ['#f97316', '#a855f7', '#22c55e', '#eab308']
+                });
+            }
+
+            // Render Winner Card
+            const winnerCard = document.getElementById('winnerCard');
+            const winnerAvatarHtml = winner.avatar.svg ? `<span class="w-16 h-16 mb-3 inline-block ${winner.avatar.color}">${winner.avatar.svg}</span>` : `<i class="fa-solid ${winner.avatar.icon}"></i>`;
+            winnerCard.innerHTML = `
+                <div class="text-6xl mb-3 ${winner.avatar.color} animate-bounce flex items-center justify-center">
+                    ${winnerAvatarHtml}
+                </div>
+                <h3 class="font-spooky text-4xl text-spooky-gold text-glow-orange mb-1">${winner.name}</h3>
+                <div class="bg-spooky-orange/20 border border-spooky-orange text-spooky-orange px-4 py-1.5 rounded-full font-bold text-lg">
+                    Счет: ${winner.score} Очков
+                </div>
+            `;
+
+            // Render Full Leaderboard
+            const finalBoard = document.getElementById('finalLeaderboardList');
+            finalBoard.innerHTML = '';
+
+            sorted.forEach((p, idx) => {
+                const medal = idx === 0 ? '<i class="fa-solid fa-trophy text-spooky-gold"></i>' : idx === 1 ? '<i class="fa-solid fa-medal text-gray-300"></i>' : idx === 2 ? '<i class="fa-solid fa-award text-amber-600"></i>' : `${idx + 1}.`;
+                const rowAvatarHtml = p.avatar.svg ? `<span class="w-5 h-5 inline-block ${p.avatar.color}">${p.avatar.svg}</span>` : `<i class="fa-solid ${p.avatar.icon} ${p.avatar.color} text-xl"></i>`;
+                const row = `
+                    <div class="bg-purple-950/60 border border-purple-800/80 rounded-xl px-4 py-2.5 flex justify-between items-center text-sm sm:text-base">
+                        <div class="flex items-center space-x-3">
+                            <span class="font-bold text-spooky-gold w-6 text-left">${medal}</span>
+                            ${rowAvatarHtml}
+                            <span class="font-bold text-white">${p.name}</span>
+                        </div>
+                        <span class="font-bold text-spooky-orange">${p.score} pts</span>
+                    </div>
+                `;
+                finalBoard.innerHTML += row;
+            });
+        }
+
+        /* --- BACKGROUND CANVAS ANIMATION (Floating Bats & Particles) --- */
+
+        function initParticles() {
+            const canvas = document.getElementById('spookyCanvas');
+            const ctx = canvas.getContext('2d');
+
+            function resize() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            }
+            resize();
+            window.addEventListener('resize', resize);
+
+            const particles = [];
+            const colors = ['#f97316', '#a855f7', '#22c55e'];
+
+            for (let i = 0; i < 40; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    radius: Math.random() * 3 + 1,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    vx: (Math.random() - 0.5) * 0.8,
+                    vy: (Math.random() - 0.5) * 0.8,
+                    alpha: Math.random() * 0.6 + 0.2
+                });
+            }
+
+            function animate() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                particles.forEach(p => {
+                    p.x += p.vx;
+                    p.y += p.vy;
+
+                    if (p.x < 0) p.x = canvas.width;
+                    if (p.x > canvas.width) p.x = 0;
+                    if (p.y < 0) p.y = canvas.height;
+                    if (p.y > canvas.height) p.y = 0;
+
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                    ctx.fillStyle = p.color;
+                    ctx.globalAlpha = p.alpha;
+                    ctx.fill();
+                });
+
+                ctx.globalAlpha = 1;
+                requestAnimationFrame(animate);
+            }
+            animate();
+        }
+    </script>
+</body>
+</html>
